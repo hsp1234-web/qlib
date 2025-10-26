@@ -1,0 +1,21 @@
+# requirements.txt
+# 這個檔案用來定義專案所需的 Python 函式庫
+# 在 Colab 或任何其他環境中，可以使用 `pip install -r requirements.txt` 來安裝所有依賴項
+
+# --- 核心數據分析與處理 ---
+pandas
+numpy
+
+# --- 金融數據下載 ---
+yfinance
+
+# --- 回測框架 ---
+# Backtesting.py 是一個簡潔且功能強大的回測工具
+backtesting
+
+# --- 前端儀表板 ---
+# Streamlit 用於快速建立互動式的網頁應用
+streamlit
+
+# --- 用於繪圖，是 backtesting 的依賴項 ---
+Brotli
