@@ -101,11 +101,14 @@ except Exception as e:
 #@title 2. 從 GitHub 同步專案程式碼
 import os
 
-# --- 設定區 ---
-# 請將這裡換成您自己的 GitHub 儲存庫網址
-GITHUB_REPO_URL = "https://github.com/hsp1234-web/qlib.git"
-# 您可以在這裡指定要使用的分支名稱
-GIT_BRANCH = "feature/colab-quant-workflow"
+#@markdown ### **1. 設定 GitHub 儲存庫**
+#@markdown 請填寫您的 GitHub 儲存庫網址。
+GITHUB_REPO_URL = "https://github.com/hsp1234-web/qlib.git" #@param {type:"string"}
+
+#@markdown ---
+#@markdown ### **2. 輸入分支名稱**
+#@markdown 請輸入您想要使用的分支名稱（例如 `main` 或 `feature/new-strategy`）。
+GIT_BRANCH = "main" #@param {type:"string"}
 # --- 設定區結束 ---
 
 # --- 將設定儲存為環境變數，供後續儲存格使用 ---
