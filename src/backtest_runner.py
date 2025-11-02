@@ -7,13 +7,15 @@ from datetime import datetime
 import sys
 import os
 
-# 確保 src 目錄在 Python 的搜尋路徑中
-# 這樣我們才能正確地 import lo2cin4bt 模組
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 將專案根目錄 (src 的上一層) 加入到 sys.path，以確保模組能被正確找到
+# 使用 insert(0, ...) 確保專案路徑優先於其他路徑
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 匯入 lo2cin4bt 的核心模組
 from lo2cin4bt.dataloader.yfinance_loader import YahooFinanceLoader
-from lo2cin4bt.backtester.Base_backtester import BaseBacktester
+from lo2cin4bt.backtester.Base_backtester import BaseBacktester, DEFAULT_LONG_STRATEGY_PAIRS, DEFAULT_SHORT_STRATEGY_PAIRS, DEFAULT_ALL_STRATEGY_PAIRS
+from lo2cin4bt.backtester.VectorBacktestEngine_backtester import VectorBacktestEngine
+from lo2cin4bt.backtester.Indicators_backtester import IndicatorsBacktester
 from lo2cin4bt.metricstracker.Base_metricstracker import BaseMetricTracker
 from lo2cin4bt.dataloader.validator_loader import DataValidator
 from lo2cin4bt.dataloader.calculator_loader import ReturnCalculator
@@ -64,19 +66,95 @@ def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "d
 
     # 2. 執行回測
     logger.info("--- 步驟 2: 正在執行向量化回測 ---")
+
+    # 手動建構非互動式回測設定
+    logger.info(f"--- 正在為 '{strategy}' 策略建構非互動式設定檔 ---")
+
+    strategy_map = {
+        "defaultlong": DEFAULT_LONG_STRATEGY_PAIRS,
+        "defaultshort": DEFAULT_SHORT_STRATEGY_PAIRS,
+        "defaultall": DEFAULT_ALL_STRATEGY_PAIRS
+    }
+
+    selected_strategy_pairs = strategy_map.get(strategy)
+
+    if selected_strategy_pairs is None:
+        logger.error(f"錯誤：無效的策略名稱 '{strategy}'。請使用 'defaultlong', 'defaultshort', 或 'defaultall'。")
+        return
+
+    condition_pairs = []
+    for entry, exit_cond in selected_strategy_pairs:
+        entry_list = entry if isinstance(entry, list) else [entry]
+        exit_list = exit_cond if isinstance(exit_cond, list) else [exit_cond]
+        condition_pairs.append({"entry": entry_list, "exit": exit_list})
+
+    # --- 產生有效的指標參數 ---
+    indicators_helper = IndicatorsBacktester(logger=logger)
+    indicator_params = {}
+
+    # 為不同指標類型定義預設參數
+    default_params = {
+        "MA": {"ma_type": "SMA", "ma_range": "10:200:20", "short_range": "10:50:20", "long_range": "60:90:30", "m_range": "1:20:5", "n_range": "10:200:40"},
+        "BOLL": {"ma_range": "10:200:20", "sd_multi": "1,1.5,2"},
+        "HL": {"n_range": "1:5:2", "m_range": "10:200:20"},
+        "PERC": {"window_range": "10:200:20", "percentile_range": "90:100:10", "m1_range": "60:80:10", "m2_range": "80:100:10"},
+        "VALUE": {"n_range": "1:5:2", "m_range": "10:50:10", "m1_range": "10:50:10", "m2_range": "60:90:10"},
+        "NDAY": {"n_range": "1:10:3"}
+    }
+
+    for i, pair in enumerate(condition_pairs):
+        all_indicators_in_pair = set(pair['entry']) | set(pair['exit'])
+        for indicator_alias in all_indicators_in_pair:
+            strategy_alias = f"{indicator_alias}_strategy_{i + 1}"
+
+            # 確定指標主類型
+            main_type = ""
+            for key in default_params.keys():
+                if indicator_alias.startswith(key):
+                    main_type = key
+                    break
+
+            if main_type:
+                params_config = default_params[main_type]
+                params_list = indicators_helper.get_indicator_params(indicator_alias, params_config)
+                indicator_params[strategy_alias] = params_list
+            else:
+                logger.warning(f"無法為指標 '{indicator_alias}' 找到預設參數，將傳入空字典。")
+                indicator_params[strategy_alias] = indicators_helper.get_indicator_params(indicator_alias, {})
+
+
+    config = {
+        "condition_pairs": condition_pairs,
+        "indicator_params": indicator_params,
+        "predictors": ["Close"],
+        "trading_params": {
+            "transaction_cost": 0.001,
+            "slippage": 0.0005,
+            "trade_delay": 1,
+            "trade_price": "open"
+        },
+        "initial_capital": 1000000,
+    }
+
+    logger.info("非互動式設定檔建構完成。")
+
+    # 建立回測器實例並傳入數據
     backtester = BaseBacktester(data, frequency=frequency, logger=logger, symbol=ticker)
 
-    # 產生預設策略設定
-    config = backtester.generate_default_config(strategy=strategy, predictor="Close")
-
     # 以非互動方式執行回測
-    backtester.run(config=config)
+    logger.info("--- 開始執行回測引擎 ---")
+    backtester.backtest_engine = VectorBacktestEngine(
+        data, frequency or "1D", logger, getattr(backtester, 'symbol', 'X')
+    )
+    backtester.results = backtester.backtest_engine.run_backtests(config)
+
+    # 手動觸發結果導出
+    backtester._export_results(config)
 
     logger.info("回測執行完畢。")
 
     # 3. 分析績效
     logger.info("--- 步驟 3: 正在計算績效指標 ---")
-    # BaseMetricTracker 會自動讀取最新的回測結果檔案，所以不需要傳入參數
     metric_tracker = BaseMetricTracker()
     metric_tracker.run_analysis()
 
@@ -94,9 +172,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # 處理台股期貨代碼
-    # Yahoo Finance 期望的格式是 @TVC.TW F.1!，但直接在命令列傳入特殊字元會有問題
-    # 我們讓使用者輸入 @TVC.TWF.1! 即可
     ticker_processed = args.ticker.replace('F.1!', ' F.1!')
 
     run_backtest(ticker_processed, args.start_date, args.end_date, args.strategy)
