@@ -42,11 +42,11 @@ flowchart TD
 - 其他模組如有依賴本模組，請於對應檔案頂部註解標明
 """
 
-from metricstracker.Base_metricstracker import BaseMetricTracker
-from metricstracker.MetricsCalculator_metricstracker import (
+from .Base_metricstracker import BaseMetricTracker
+from .MetricsCalculator_metricstracker import (
     MetricsCalculatorMetricTracker,
 )
-from metricstracker.MetricsExporter_metricstracker import MetricsExporter
+from .MetricsExporter_metricstracker import MetricsExporter
 
 # 如果有以下檔案再加上
 # from metricstracker.Utils_metricstracker import *

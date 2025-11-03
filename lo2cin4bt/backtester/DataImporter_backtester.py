@@ -91,7 +91,7 @@ import numpy as np
 import pandas as pd
 
 try:
-    from dataloader.base_loader import DataLoader
+    from ..dataloader.base_loader import DataLoader
 except ImportError as e:
     logging.error(f"無法導入 DataLoader: {str(e)}")
     raise ImportError("請確認 dataloader.base_loader 模組存在並可導入。")
