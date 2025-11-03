@@ -16,6 +16,7 @@ backtesting
 # --- 前端儀表板 ---
 # Streamlit 用於快速建立互動式的網頁應用
 streamlit
+gradio
 
 # --- 用於繪圖，是 backtesting 的依賴項 ---
 Brotli
@@ -30,8 +31,6 @@ certifi>=2023.7.22
 curl_cffi>=0.5.0
 
 # Plotter visualization platform dependencies
-dash>=2.15.0
-dash-bootstrap-components>=2.0.0
 dateparser>=1.1.0
 
 # Plotter module dependencies
@@ -70,6 +69,8 @@ pyarrow>=10.0.0
 pycryptodome>=3.17
 pytest>=7.0.0
 pytest-cov>=4.0.0
+playwright
+pytest-playwright
 python-binance>=1.0.0
 python-dateutil>=2.8.2
 
@@ -83,9 +84,9 @@ scipy>=1.10.0
 statsmodels>=0.14.0
 tqdm>=4.66.2
 types-pytz==2025.2.0.20250809
-types-requests==2.32.4.20250809
+types-requests
 
 # requests-related dependencies
-urllib3>=1.26.0
+urllib3
 websockets>=11.0.0
 yfinance>=0.2.0

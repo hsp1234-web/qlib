@@ -71,14 +71,14 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from autorunner.BacktestRunner_autorunner import BacktestRunnerAutorunner
+from .BacktestRunner_autorunner import BacktestRunnerAutorunner
 
 # 導入 autorunner 模組
-from autorunner.ConfigLoader_autorunner import ConfigLoader
-from autorunner.ConfigSelector_autorunner import ConfigSelector
-from autorunner.ConfigValidator_autorunner import ConfigValidator
-from autorunner.DataLoader_autorunner import DataLoaderAutorunner
-from autorunner.MetricsRunner_autorunner import MetricsRunnerAutorunner
+from .ConfigLoader_autorunner import ConfigLoader
+from .ConfigSelector_autorunner import ConfigSelector
+from .ConfigValidator_autorunner import ConfigValidator
+from .DataLoader_autorunner import DataLoaderAutorunner
+from .MetricsRunner_autorunner import MetricsRunnerAutorunner
 
 # from rich.progress import Progress, SpinnerColumn, TextColumn  # 暫時註釋，後續使用
 
@@ -148,11 +148,10 @@ class BaseAutorunner:
             if not directory.exists():
                 directory.mkdir(parents=True, exist_ok=True)
 
-    def run(self) -> None:
+    def run(self, config: Optional[Dict] = None) -> None:
         """
         執行 autorunner 主流程
-
-        這是 autorunner 的主要入口點，協調整個自動化回測流程。
+        可直接傳入 config 物件，或進入互動模式選擇。
         """
         self.logger.info("開始執行 autorunner 主流程")
 
@@ -160,20 +159,28 @@ class BaseAutorunner:
             # 顯示歡迎信息
             self._display_welcome()
 
-            # 步驟1: 選擇配置文件
-            selected_configs = self._select_configs()
-            if not selected_configs:
-                return
+            if config:
+                # 如果直接提供了 config，將其放入列表中以符合現有邏輯
+                # 我們需要一個簡單的方式來處理 config 物件，使其與 ConfigData 行為類似
+                from types import SimpleNamespace
+                config_data = SimpleNamespace(file_name="dynamic_config", **config)
+                config_data_list = [config_data]
 
-            # 步驟2: 驗證配置文件
-            valid_configs = self._validate_configs(selected_configs)
-            if not valid_configs:
-                return
+            else:
+                # 步驟1: 選擇配置文件
+                selected_configs = self._select_configs()
+                if not selected_configs:
+                    return
 
-            # 步驟3: 載入配置文件
-            config_data_list = self._load_configs(valid_configs)
-            if not config_data_list:
-                return
+                # 步驟2: 驗證配置文件
+                valid_configs = self._validate_configs(selected_configs)
+                if not valid_configs:
+                    return
+
+                # 步驟3: 載入配置文件
+                config_data_list = self._load_configs(valid_configs)
+                if not config_data_list:
+                    return
 
             # 步驟4: 執行配置文件
             self._execute_configs(config_data_list)

@@ -71,7 +71,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from dataloader.validator_loader import print_dataframe_table
+from .validator_loader import print_dataframe_table
 
 console = Console()
 
