@@ -25,7 +25,6 @@ lxml>=4.9.0
 
 # MAC-related download libraries
 # Standard library dependencies
-multiprocessing
 multitasking>=0.0.11
 
 # plotly-related dependencies

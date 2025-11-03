@@ -21,7 +21,7 @@ import pandas as pd
 from rich.console import Console
 from rich.panel import Panel
 
-from backtester.Base_backtester import BaseBacktester
+from ..backtester.Base_backtester import BaseBacktester
 
 
 class BacktestRunnerAutorunner:
