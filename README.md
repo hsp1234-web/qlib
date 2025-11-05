@@ -1,6 +1,6 @@
 # Colab 量化分析工作流專案
 
-[![在 Colab 中開啟](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hsp1234-web/qlib/blob/6.5/Master_Workflow.ipynb)
+[![在 Colab 中開啟](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/hsp1234-web/qlib/blob/6.6/Master_Workflow.ipynb)
 
 這是一個標準化的量化分析工作流程，專為在 Google Colab 中執行而設計。點擊上方的「在 Colab 中開啟」按鈕，即可一鍵啟動完整的分析筆記本。
 
