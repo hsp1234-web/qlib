@@ -55,7 +55,7 @@ from typing import Optional, Tuple
 import pandas as pd
 import yfinance as yf
 
-from dataloader.validator_loader import print_dataframe_table
+from .validator_loader import print_dataframe_table
 
 from .base_loader import AbstractDataLoader
 

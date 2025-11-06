@@ -90,7 +90,7 @@ class DataLoaderAutorunner:
         self.using_price_predictor_only: bool = False
         
         # 創建一個 FileLoader 實例來調用原版 dataloader 的方法
-        from dataloader.file_loader import FileLoader
+        from ..dataloader.file_loader import FileLoader
         self._loader_helper = FileLoader()
 
     def load_data(self, config: Dict[str, Any]) -> Optional[pd.DataFrame]:
@@ -111,7 +111,7 @@ class DataLoaderAutorunner:
             
             # 直接使用原版 dataloader 模組，並設置配置參數
             if source == "yfinance":
-                from dataloader.yfinance_loader import YahooFinanceLoader
+                from ..dataloader.yfinance_loader import YahooFinanceLoader
                 loader = YahooFinanceLoader()
                 # 設置配置參數
                 yfinance_config = config.get("yfinance_config", {})
@@ -123,7 +123,7 @@ class DataLoaderAutorunner:
                 loader.end_date = datetime.now().strftime("%Y-%m-%d")
                 
             elif source == "binance":
-                from dataloader.binance_loader import BinanceLoader
+                from ..dataloader.binance_loader import BinanceLoader
                 loader = BinanceLoader()
                 # 設置配置參數
                 binance_config = config.get("binance_config", {})
@@ -135,7 +135,7 @@ class DataLoaderAutorunner:
                 loader.end_date = datetime.now().strftime("%Y-%m-%d")
                 
             elif source == "coinbase":
-                from dataloader.coinbase_loader import CoinbaseLoader
+                from ..dataloader.coinbase_loader import CoinbaseLoader
                 loader = CoinbaseLoader()
                 # 設置配置參數
                 coinbase_config = config.get("coinbase_config", {})
@@ -146,7 +146,7 @@ class DataLoaderAutorunner:
                 loader.end_date = datetime.now().strftime("%Y-%m-%d")
                 
             elif source == "file":
-                from dataloader.file_loader import FileLoader
+                from ..dataloader.file_loader import FileLoader
                 loader = FileLoader()
                 # 設置配置參數
                 file_config = config.get("file_config", {})
@@ -411,7 +411,7 @@ class DataLoaderAutorunner:
     def _calculate_returns(self, config: Dict[str, Any]) -> pd.DataFrame:
         """計算收益率 - 直接使用原版 dataloader"""
         try:
-            from dataloader.calculator_loader import ReturnCalculator
+            from ..dataloader.calculator_loader import ReturnCalculator
             
             calculator = ReturnCalculator(self.data)
             return calculator.calculate_returns()
@@ -429,7 +429,7 @@ class DataLoaderAutorunner:
     def _process_difference(self, config: Dict[str, Any]) -> pd.DataFrame:
         """處理差分 - 直接使用原版 dataloader"""
         try:
-            from dataloader.predictor_loader import PredictorLoader
+            from ..dataloader.predictor_loader import PredictorLoader
             
             predictor_config = config.get("predictor_config", {})
             selected_predictor = predictor_config.get("predictor_column", "aggregated")
