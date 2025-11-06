@@ -55,25 +55,31 @@ from typing import Optional, Tuple
 import pandas as pd
 import yfinance as yf
 
-from dataloader.validator_loader import print_dataframe_table
+from .validator_loader import print_dataframe_table
 
 from .base_loader import AbstractDataLoader
 
 
 class YahooFinanceLoader(AbstractDataLoader):
-    def load(self) -> Tuple[Optional[pd.DataFrame], str]:
-        """從 Yahoo Finance 載入數據，參考 vectorbt 的標準化處理"""
-
-        # Get user inputs
-        ticker = self._get_ticker()
-        frequency = self._get_frequency()
-        start_date, end_date = self._get_date_range()
+    def load(self, ticker: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, frequency: Optional[str] = None) -> Tuple[Optional[pd.DataFrame], str]:
+        """
+        從 Yahoo Finance 載入數據。
+        支援互動模式（無參數傳入）與非互動模式（傳入參數）。
+        """
+        # 如果未提供參數，則進入互動模式
+        if ticker is None:
+            ticker = self._get_ticker()
+        if frequency is None:
+            frequency = self._get_frequency()
+        if start_date is None or end_date is None:
+            start_date, end_date = self._get_date_range()
 
         try:
-            # Download data from Yahoo Finance
+            # 下載數據
             data, error_msg = self._download_data(ticker, start_date, end_date)
             if data is None:
-                return None, frequency
+                # 在非互動模式下，返回 None 和提供的頻率 (如果有的話)
+                return None, frequency or ""
 
             # Print raw data structure for diagnosis
             print_dataframe_table(data.head(), title="原始數據預覽（前5行）")

@@ -55,7 +55,7 @@ import pandas as pd  # 用於讀取 Excel/CSV 文件、數據處理（如重命�
 from rich.panel import Panel
 from rich.table import Table
 
-from dataloader.validator_loader import print_dataframe_table
+from .validator_loader import print_dataframe_table
 
 from .base_loader import AbstractDataLoader
 

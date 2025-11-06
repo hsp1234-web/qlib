@@ -1,4 +1,14 @@
-
-
 # Gradio cache
 .gradio/
+
+# Python cache
+__pycache__/
+*.pyc
+*.nbc
+*.nbi
+
+# Logs
+*.log
+
+# Backtest records
+lo2cin4bt/records/
