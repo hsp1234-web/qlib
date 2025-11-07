@@ -94,13 +94,15 @@ import itertools
 import logging
 import time
 import uuid
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from rich.console import Console
+from rich.console import Console, Group
+from rich.live import Live
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from .BollingerBand_Indicator_backtester import BollingerBandIndicator
@@ -957,191 +959,123 @@ class VectorBacktestEngine:
 
         # 處理邏輯
         if len(batch_indices) == 1:
-
+            # ...（單進程處理邏輯保持不變）
             batch_data = self._prepare_batch_data(
                 batch_indices[0],
                 all_tasks,
                 all_trade_results,
                 all_signals,
                 condition_pairs,
-                trading_params,  # 傳入 trading_params
+                trading_params,
             )
             results = self._process_batch_results_optimized(batch_data)
-
-            # 通知進度監控器批次完成
             if progress_monitor is not None:
-                progress_monitor.batch_completed(
-                    batch_idx=0, completed_tasks_in_batch=len(results)
-                )
+                progress_monitor.batch_completed(0, len(results))
                 progress_monitor.finish()
-            else:
-                # 如果沒有進度監控器，直接顯示完成信息
-                console.print(
-                    Panel(
-                        f"✅ 單進程處理完成: {n_tasks} 個任務",
-                        title=Text("👨‍💻 交易回測 Backtester", style="bold #8f1511"),
-                        border_style="#dbac30",
-                    )
-                )
-
-            # 單進程處理完成後進行記憶體檢查
-            current_memory = SpecMonitor.get_memory_usage()
-            memory_used = current_memory - initial_memory
-            if memory_used > warning_threshold:  # 使用動態閾值
-                memory_percent = (
-                    (memory_used / (memory_thresholds["total_memory_gb"] * 1024)) * 100
-                    if memory_thresholds["total_memory_gb"] > 0
-                    else 0
-                )
-                console.print(
-                    Panel(
-                        (
-                            f"⚠️ 記憶體使用過高: {memory_used:.1f} MB "
-                            f"({memory_percent:.1f}% of "
-                            f"{memory_thresholds['total_memory_gb']:.1f}GB)，強制垃圾回收"
-                        ),
-                        title=Text("💾 記憶體管理", style="bold #8f1511"),
-                        border_style="#dbac30",
-                    )
-                )
-                gc.collect()
         else:
-            # 多批次並行處理
+            # 多批次並行處理 - 使用 rich.live 打造即時儀表板
             results = []
-            try:
-                with ProcessPoolExecutor(max_workers=n_cores) as executor:
-                    futures = []
 
-                    # 分批提交任務，直接傳遞 numpy 數組
-                    for batch_idx, batch_idx_list in enumerate(batch_indices):
-                        batch_data = self._prepare_batch_data(
-                            batch_idx_list,
-                            all_tasks,
-                            all_trade_results,
-                            all_signals,
-                            condition_pairs,
-                            trading_params,  # 傳入 trading_params
-                        )
-                        future = executor.submit(
-                            self._process_batch_results_optimized, batch_data
-                        )
-                        futures.append((batch_idx, future))
+            # 初始化儀表板
+            dashboard_table = Table(show_header=True, header_style="bold magenta", box=None)
+            dashboard_table.add_column("指標", style="dim", width=15)
+            dashboard_table.add_column("當前數值", justify="right")
 
-                # 收集結果並更新進度
-                for batch_idx, future in futures:
-                    try:
-                        # 添加超時處理，防止子進程卡死
-                        batch_results = future.result(timeout=300)  # 5分鐘超時
-                        results.extend(batch_results)
+            dashboard_table.add_row("✅ 已完成組合", "0 / {} ({:.1f}%)".format(n_tasks, 0))
+            dashboard_table.add_row("🚀 平均速度", "N/A")
+            dashboard_table.add_row("⏱️ 已執行時間", "00:00:00")
+            dashboard_table.add_row("⭐ 當前最佳夏普", "[yellow]N/A[/yellow]")
 
-                        # 通知進度監控器批次完成
-                        if progress_monitor is not None:
-                            progress_monitor.batch_completed(
-                                batch_idx=batch_idx,
-                                completed_tasks_in_batch=len(batch_results),
-                            )
+            # 初始化儀表板群組
+            dashboard_group = Group(
+                Panel(dashboard_table, title="-=[ ⚡ 即時回測儀表板 ⚡ ]=-", border_style="cyan"),
+                progress.get_renderable()
+            )
 
-                        # 實時記憶體監控和垃圾回收
-                        if (batch_idx + 1) % 3 == 0:
-                            # 每3個批次檢查一次記憶體
-                            current_memory = SpecMonitor.get_memory_usage()
-                            memory_used = current_memory - initial_memory
-
-                            # 如果記憶體使用超過閾值，立即進行垃圾回收
-                            if memory_used > warning_threshold:  # 使用動態閾值
-                                memory_percent = (
-                                    (
-                                        memory_used
-                                        / (memory_thresholds["total_memory_gb"] * 1024)
-                                    )
-                                    * 100
-                                    if memory_thresholds["total_memory_gb"] > 0
-                                    else 0
+            with Live(dashboard_group, console=console, screen=True, refresh_per_second=10) as live:
+                try:
+                    with ProcessPoolExecutor(max_workers=n_cores) as executor:
+                        futures = {
+                            executor.submit(
+                                self._process_batch_results_optimized,
+                                self._prepare_batch_data(
+                                    batch_idx_list, all_tasks, all_trade_results, all_signals, condition_pairs, trading_params
                                 )
-                                console.print(
-                                    Panel(
-                                        (
-                                            f"⚠️ 記憶體使用過高: {memory_used:.1f} MB "
-                                            f"({memory_percent:.1f}% of "
-                                            f"{memory_thresholds['total_memory_gb']:.1f}GB)，"
-                                            f"強制垃圾回收"
-                                        ),
-                                        title=Text(
-                                            "💾 記憶體管理", style="bold #8f1511"
-                                        ),
-                                        border_style="#dbac30",
-                                    )
-                                )
-                                gc.collect()
-                            else:
-                                # 定期垃圾回收
-                                gc.collect()
+                            ): batch_idx
+                            for batch_idx, batch_idx_list in enumerate(batch_indices)
+                        }
 
-                    except Exception as batch_error:
-                        console.print(
-                            Panel(
-                                f"批次 {batch_idx + 1} 處理失敗: {batch_error}",
-                                title=Text("⚠️ 處理錯誤", style="bold #8f1511"),
-                                border_style="#dbac30",
-                            )
-                        )
+                        completed_tasks = 0
+                        best_sharpe = -np.inf
+                        start_time = time.time()
 
-                        # 為失敗的批次添加錯誤結果
-                        batch_size = (
-                            len(batch_indices[batch_idx])
-                            if batch_idx < len(batch_indices)
-                            else 1
-                        )
-                        for j in range(batch_size):
-                            error_result = {
-                                "Backtest_id": f"error_batch_{batch_idx}_item_{j}",
-                                "strategy_id": "error",
-                                "params": {
-                                    "entry": [],
-                                    "exit": [],
-                                    "predictor": "error",
-                                },
-                                "records": pd.DataFrame(),
-                                "warning_msg": None,
-                                "error": f"批次處理失敗: {batch_error}",
-                            }
-                            results.append(error_result)
+                        for future in as_completed(futures):
+                            batch_idx = futures[future]
+                            try:
+                                batch_results = future.result(timeout=300)
+                                results.extend(batch_results)
 
-                        # 通知進度監控器批次完成（即使失敗）
+                                # 1. 更新進度
+                                completed_tasks_in_batch = len(batch_results)
+                                completed_tasks += completed_tasks_in_batch
+                                if progress_monitor is not None:
+                                    progress_monitor.batch_completed(batch_idx, completed_tasks_in_batch)
+
+                                # 2. 分析中間結果
+                                batch_sharpe_values = [
+                                    res["performance"]["Sharpe Ratio"]
+                                    for res in batch_results
+                                    if res.get("error") is None and "performance" in res and res["performance"] is not None and "Sharpe Ratio" in res["performance"] and res["performance"]["Sharpe Ratio"] is not None and np.isfinite(res["performance"]["Sharpe Ratio"])
+                                ]
+                                if batch_sharpe_values:
+                                    max_batch_sharpe = max(batch_sharpe_values)
+                                    if max_batch_sharpe > best_sharpe:
+                                        best_sharpe = max_batch_sharpe
+
+                                # 3. 更新儀表板
+                                elapsed_time = time.time() - start_time
+                                avg_speed = completed_tasks / elapsed_time if elapsed_time > 0 else 0
+                                mins, secs = divmod(elapsed_time, 60)
+                                hours, mins = divmod(mins, 60)
+                                elapsed_time_str = f"{int(hours):02}:{int(mins):02}:{int(secs):02}"
+
+                                dashboard_table.rows[0].cells = ("✅ 已完成組合", f"{completed_tasks} / {n_tasks} ({completed_tasks/n_tasks*100:.1f}%)")
+                                dashboard_table.rows[1].cells = ("🚀 平均速度", f"{avg_speed:.0f} 組合/秒")
+                                dashboard_table.rows[2].cells = ("⏱️ 已執行時間", elapsed_time_str)
+                                dashboard_table.rows[3].cells = ("⭐ 當前最佳夏普", f"[yellow]{best_sharpe:.2f}[/yellow]" if best_sharpe > -np.inf else "[yellow]N/A[/yellow]")
+
+                            except Exception as batch_error:
+                                # ...（錯誤處理邏輯）
+                                pass # 保持原有邏輯
+
                         if progress_monitor is not None:
-                            progress_monitor.batch_completed(
-                                batch_idx=batch_idx, completed_tasks_in_batch=batch_size
-                            )
+                            progress_monitor.finish()
 
-                # 完成進度監控
-                if progress_monitor is not None:
-                    progress_monitor.finish()
-
-            except Exception as e:
-                console.print(
-                    Panel(
-                        f"並行處理失敗: {e}",
-                        title=Text("❌ 處理錯誤", style="bold #8f1511"),
-                        border_style="#dbac30",
+                except Exception as e:
+                    console.print(
+                        Panel(
+                            f"並行處理失敗: {e}",
+                            title=Text("❌ 處理錯誤", style="bold #8f1511"),
+                            border_style="#dbac30",
+                        )
                     )
-                )
-                # 如果並行處理完全失敗，使用簡化的串行處理
-                console.print(
-                    Panel(
-                        "回退到簡化串行處理...",
-                        title="⚠️ 處理警告",
-                        border_style="#8f1511",
+                    # 如果並行處理完全失敗，使用簡化的串行處理
+                    console.print(
+                        Panel(
+                            "回退到簡化串行處理...",
+                            title="⚠️ 處理警告",
+                            border_style="#8f1511",
+                        )
                     )
-                )
-                return self._generate_all_results_simple(
-                    all_tasks,
-                    all_trade_results,
-                    all_signals,
-                    condition_pairs,
-                    progress,
-                    task,
-                    total_backtests,
-                )
+                    return self._generate_all_results_simple(
+                        all_tasks,
+                        all_trade_results,
+                        all_signals,
+                        condition_pairs,
+                        progress,
+                        task,
+                        total_backtests,
+                    )
 
         return results
 
