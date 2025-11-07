@@ -67,10 +67,6 @@ protobuf>=4.23.0
 psutil>=6.3.0
 pyarrow>=10.0.0
 pycryptodome>=3.17
-pytest>=7.0.0
-pytest-cov>=4.0.0
-playwright
-pytest-playwright
 python-binance>=1.0.0
 python-dateutil>=2.8.2
 

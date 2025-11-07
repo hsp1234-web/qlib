@@ -1,3 +1,29 @@
+# 日誌：修正 `ModuleNotFoundError`
+
+**時間戳記**: 2025/11/07 01:08:59 CST
+
+## 問題描述
+
+在 `Master_Workflow.ipynb` 中執行回測時，系統拋出 `ModuleNotFoundError: No module named 'dataloader'` 錯誤。
+
+## 根本原因分析
+
+經過追蹤，發現錯誤源於 `lo2cin4bt` 套件內部的 Python 模組（例如 `yfinance_loader.py` 和 `DataLoader_autorunner.py`）使用了不正確的**絕對導入**（`from dataloader...`）。
+
+`lo2cin4bt` 作為一個獨立的 Python 套件，其內部模組間的引用應該使用**相對導入**（例如 `from .` 或 `from ..`）。絕對導入語法會讓 Python 解譯器從頂層路徑 (`sys.path`) 尋找 `dataloader`，但在 Colab 的執行環境中，該路徑並未被正確設定，導致模組無法被找到。
+
+## 解決方案
+
+解決方案是將所有在 `lo2cin4bt` 套件內部的不正確的絕對導入，全部修改為相對導入。
+
+例如：
+*   在 `lo2cin4bt/dataloader/yfinance_loader.py` 中，`from dataloader.validator_loader...` 應改為 `from .validator_loader...`。
+*   在 `lo2cin4bt/autorunner/DataLoader_autorunner.py` 中，`from dataloader.file_loader...` 應改為 `from ..dataloader.file_loader...`。
+
+此修改可以確保 `lo2cin4bt` 套件的內部引用獨立於其所在的外部環境，從而解決 `ModuleNotFoundError` 問題。
+
+---
+
 # `Master_Workflow.ipynb` 修復日誌
 
 ## 問題描述
@@ -8,7 +34,9 @@
 
 ### 初步嘗試：手動重建 JSON 字串
 
-最初的解決思路是，透過讀取損壞檔案的內容，然後以程式化的方式手動建立一個包含正確儲存格內容的 JSON 字串，再將其寫入新的 `.ipynb` 檔案。
+最初的解決思路是，透過讀取損壞檔案的內容，然後以程式化的方式手動建立一個包含正確儲- cellpadding="0" cellspacing="0" style="width:100%"><tbody><tr><td style="width:100%;border:none;padding:0cm">
+<p>格內容的 JSON 字串，再將其寫入新的 `.ipynb` 檔案。</p>
+</td></tr></tbody></table>
 
 **結果：失敗**
 

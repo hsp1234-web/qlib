@@ -219,14 +219,9 @@ class SpecMonitor:
                     optimal_cores = total_cores - 1
                     config_info = f"🖥️ CPU檢測: {total_cores} 核心，🔧 保留系統核心: {optimal_cores}/{total_cores} 核心"
 
-                elif total_cores <= 8:
-                    # 高配置CPU（5-8核）：保留1-2個核心給系統
-                    optimal_cores = min(total_cores - 1, 6)
-                    config_info = f"🖥️ CPU檢測: {total_cores} 核心，🔧 效能配置: {optimal_cores}/{total_cores} 核心"
-
                 else:
-                    # 超高配置CPU（>8核）：最多使用8個核心
-                    optimal_cores = min(total_cores - 2, 8)
+                    # 高配置CPU (>4核)：預設使用 n-2 個核心，為系統保留2個核心
+                    optimal_cores = total_cores - 2
                     config_info = f"🖥️ CPU檢測: {total_cores} 核心，🔧 效能配置: {optimal_cores}/{total_cores} 核心"
 
             else:

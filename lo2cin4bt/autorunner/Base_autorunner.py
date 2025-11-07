@@ -400,7 +400,7 @@ class BaseAutorunner:
                 return
             
             # 直接使用原版的 TradeRecordExporter 顯示摘要
-            from backtester.TradeRecordExporter_backtester import TradeRecordExporter_backtester
+            from lo2cin4bt.backtester.TradeRecordExporter_backtester import TradeRecordExporter_backtester
             
             # 創建導出器並顯示摘要
             exporter = TradeRecordExporter_backtester(

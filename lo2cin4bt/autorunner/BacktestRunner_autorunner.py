@@ -61,7 +61,7 @@ class BacktestRunnerAutorunner:
             backtester.predictor_column = selected_predictor
             
             # 步驟 3: 直接調用 VectorBacktestEngine，避免用戶輸入
-            from backtester.VectorBacktestEngine_backtester import VectorBacktestEngine
+            from lo2cin4bt.backtester.VectorBacktestEngine_backtester import VectorBacktestEngine
             
             engine = VectorBacktestEngine(data, config.get("dataloader", {}).get("frequency", "1D"), self.logger)
             results = engine.run_backtests(backtester_config)
@@ -70,7 +70,7 @@ class BacktestRunnerAutorunner:
             backtester.results = results
             
             # 直接導出 parquet 文件，不顯示用戶選擇界面
-            from backtester.TradeRecordExporter_backtester import TradeRecordExporter_backtester
+            from lo2cin4bt.backtester.TradeRecordExporter_backtester import TradeRecordExporter_backtester
             exporter = TradeRecordExporter_backtester(
                 trade_records=pd.DataFrame(),
                 frequency=config.get("dataloader", {}).get("frequency", "1D"),
@@ -129,7 +129,7 @@ class BacktestRunnerAutorunner:
             strategy_idx = int(param_key.split("_strategy_")[1]) - 1  # 轉為0索引
             
             try:
-                from backtester.Indicators_backtester import IndicatorsBacktester
+                from lo2cin4bt.backtester.Indicators_backtester import IndicatorsBacktester
                 
                 # 創建 IndicatorsBacktester 實例
                 indicators_helper = IndicatorsBacktester(logger=self.logger)

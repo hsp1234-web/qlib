@@ -165,9 +165,7 @@ class IndicatorsBacktester:
         alias_map = {}
         # MA
         try:
-            module = importlib.import_module(
-                "backtester.MovingAverage_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import MovingAverage_Indicator_backtester as module
             if hasattr(module, "MovingAverageIndicator"):
                 descs = module.MovingAverageIndicator.get_strategy_descriptions()
                 for code, desc in descs.items():
@@ -178,9 +176,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取MA指標描述: {e}")
         # BOLL
         try:
-            module = importlib.import_module(
-                "backtester.BollingerBand_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import BollingerBand_Indicator_backtester as module
             if hasattr(module, "BollingerBandIndicator") and hasattr(
                 module.BollingerBandIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -193,7 +189,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取BOLL指標描述: {e}")
         # HL
         try:
-            module = importlib.import_module("backtester.HL_Indicator_backtester")
+            from lo2cin4bt.backtester import HL_Indicator_backtester as module
             if hasattr(module, "HLIndicator") and hasattr(
                 module.HLIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -204,9 +200,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取HL指標描述: {e}")
         # PERC
         try:
-            module = importlib.import_module(
-                "backtester.Percentile_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import Percentile_Indicator_backtester as module
             if hasattr(module, "PercentileIndicator") and hasattr(
                 module.PercentileIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -219,7 +213,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取PERC指標描述: {e}")
         # VALUE
         try:
-            module = importlib.import_module("backtester.VALUE_Indicator_backtester")
+            from lo2cin4bt.backtester import VALUE_Indicator_backtester as module
             if hasattr(module, "VALUEIndicator") and hasattr(
                 module.VALUEIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -266,7 +260,7 @@ class IndicatorsBacktester:
             main_type, strat_idx = alias
             module_name = self.new_indicators[main_type]
             # print(f"[DEBUG] main_type={main_type}, strat_idx={strat_idx}, module_name={module_name}")
-            module = importlib.import_module(f"backtester.{module_name}")
+            module = importlib.import_module(f"lo2cin4bt.backtester.{module_name}")
             # print(f"[DEBUG] dir(module): {dir(module)}")
             # 修正 class 名稱取得，避免大小寫錯誤
             indicator_cls_name_map = {
@@ -313,7 +307,7 @@ class IndicatorsBacktester:
         if indicator_name not in self.indicator_map:
             raise ValueError(f"未知指標: {indicator_name}")
         module_name = self.indicator_map[indicator_name]
-        module = importlib.import_module(f"backtester.{module_name}")
+        module = importlib.import_module(f"lo2cin4bt.backtester.{module_name}")
         # 預設每個 indicator class 叫 Indicator 或 MovingAverageIndicator
         if hasattr(module, "MovingAverageIndicator"):
             indicator_cls = getattr(module, "MovingAverageIndicator")
@@ -328,9 +322,7 @@ class IndicatorsBacktester:
         indicator_descs = {}
         # MA
         try:
-            module = importlib.import_module(
-                "backtester.MovingAverage_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import MovingAverage_Indicator_backtester as module
             if hasattr(module, "MovingAverageIndicator"):
                 descs = module.MovingAverageIndicator.get_strategy_descriptions()
                 for code, desc in descs:
@@ -339,9 +331,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取MA指標描述: {e}")
         # BOLL
         try:
-            module = importlib.import_module(
-                "backtester.BollingerBand_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import BollingerBand_Indicator_backtester as module
             if hasattr(module, "BollingerBandIndicator") and hasattr(
                 module.BollingerBandIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -353,9 +343,7 @@ class IndicatorsBacktester:
             self.logger.warning(f"無法獲取BOLL指標描述: {e}")
         # PERC (added)
         try:
-            module = importlib.import_module(
-                "backtester.Percentile_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import Percentile_Indicator_backtester as module
             if hasattr(module, "PercentileIndicator") and hasattr(
                 module.PercentileIndicator, "STRATEGY_DESCRIPTIONS"
             ):
@@ -408,9 +396,7 @@ class IndicatorsBacktester:
 
         try:
             # 動態導入模組
-            module = importlib.import_module(
-                "backtester.MovingAverage_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import MovingAverage_Indicator_backtester as module
             indicator_cls = getattr(module, "MovingAverageIndicator")
             # print(f"[DEBUG] 成功導入 MovingAverageIndicator")
 
@@ -438,9 +424,7 @@ class IndicatorsBacktester:
 
         try:
             # 動態導入模組
-            module = importlib.import_module(
-                "backtester.BollingerBand_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import BollingerBand_Indicator_backtester as module
             indicator_cls = getattr(module, "BollingerBandIndicator")
             # print(f"[DEBUG] 成功導入 BollingerBandIndicator")
 
@@ -468,7 +452,7 @@ class IndicatorsBacktester:
 
         try:
             # 動態導入模組
-            module = importlib.import_module("backtester.HL_Indicator_backtester")
+            from lo2cin4bt.backtester import HL_Indicator_backtester as module
             indicator_cls = getattr(module, "HLIndicator")
             # print(f"[DEBUG] 成功導入 HLIndicator")
 
@@ -496,7 +480,7 @@ class IndicatorsBacktester:
 
         try:
             # 動態導入模組
-            module = importlib.import_module("backtester.VALUE_Indicator_backtester")
+            from lo2cin4bt.backtester import VALUE_Indicator_backtester as module
             indicator_cls = getattr(module, "VALUEIndicator")
             # print(f"[DEBUG] 成功導入 VALUEIndicator")
 
@@ -524,9 +508,7 @@ class IndicatorsBacktester:
 
         try:
             # 動態導入模組
-            module = importlib.import_module(
-                "backtester.Percentile_Indicator_backtester"
-            )
+            from lo2cin4bt.backtester import Percentile_Indicator_backtester as module
             indicator_cls = getattr(module, "PercentileIndicator")
             # print(f"[DEBUG] 成功導入 PercentileIndicator")
 

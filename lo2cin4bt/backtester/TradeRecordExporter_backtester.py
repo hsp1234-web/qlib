@@ -91,6 +91,7 @@ flowchart TD
 import json
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
@@ -797,20 +798,12 @@ class TradeRecordExporter_backtester:
 
             # 分頁導航
             if total_pages > 1:
-                if is_autorunner:
-                    # autorunner 模式：顯示所有頁面但不要求用戶輸入
-                    if page < total_pages:
-                        page += 1
-                        console.clear()
-                        continue
-                    else:
-                        # 已經顯示完所有頁面，跳出循環
-                        break
-                else:
-                    # 原版 backtester 模式：顯示分頁導航並要求用戶輸入
+                # 檢查是否在互動模式下
+                if sys.stdout.isatty():
+                    # 互動模式：顯示分頁導航並要求用戶輸入
                     console.print(
                         Panel(
-                            "📄 分頁導航: [m] 下一頁(m) | [n] 上一頁(n) | [數字] 跳轉到指定頁 | [q] 進入操作選單(q)",
+                            "📄 分頁導航:  下一頁(m) |  上一頁(n) | [數字] 跳轉到指定頁 | 進入操作選單(q)",
                             title="[bold #8f1511]📄 👨‍💻 交易回測 Backtester[/bold #8f1511]",
                             border_style="#dbac30",
                         )
@@ -835,16 +828,15 @@ class TradeRecordExporter_backtester:
                             console.print("❌ 頁碼超出範圍", style="red")
                     else:
                         console.print("❌ 無效命令", style="red")
+                else:
+                    # 非互動模式：只顯示第一頁，然後跳出循環
+                    break
             else:
+                # 只有一頁，直接跳出
                 break
 
-        # 分支邏輯：根據調用來源決定是否顯示用戶界面
-        import sys
-        if 'autorunner' in sys.modules:
-            # autorunner 模式：只顯示摘要，不顯示用戶界面
-            pass
-        else:
-            # 原版 backtester 模式：顯示用戶選擇界面
+        # 僅在互動模式下顯示操作選單
+        if sys.stdout.isatty():
             self._show_operation_menu()
 
     def _show_operation_menu(self) -> None:  # noqa: C901

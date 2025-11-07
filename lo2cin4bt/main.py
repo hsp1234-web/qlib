@@ -73,8 +73,8 @@ from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 import numpy as np
 import pandas as pd
 
-from backtester.Base_backtester import BaseBacktester
-from metricstracker.Base_metricstracker import BaseMetricTracker
+from lo2cin4bt.backtester.Base_backtester import BaseBacktester
+from lo2cin4t.metricstracker.Base_metricstracker import BaseMetricTracker
 from statanalyser.AutocorrelationTest_statanalyser import AutocorrelationTest
 from statanalyser.Base_statanalyser import BaseStatAnalyser
 from statanalyser.CorrelationTest_statanalyser import CorrelationTest
@@ -467,7 +467,7 @@ def main():
     try:
         if choice == "1":
             # 全面回測，使用 BaseDataLoader 處理所有數據來源互動
-            from dataloader.base_loader import BaseDataLoader
+            from lo2cin4bt.dataloader.base_loader import BaseDataLoader
 
             data_loader = BaseDataLoader(logger=logger)
             data = data_loader.run()
@@ -647,7 +647,7 @@ def main():
             logger.info("[主選單] 回測交易")
 
             # 使用新的 BaseDataLoader
-            from dataloader.base_loader import BaseDataLoader
+            from lo2cin4bt.dataloader.base_loader import BaseDataLoader
 
             data_loader = BaseDataLoader(logger=logger)
             data = data_loader.run()

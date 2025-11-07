@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger("BacktestRunner")
 # ---
 
-def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "defaultlong"):
+def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "defaultlong", smoke_test: bool = False):
     """
     執行一次完整的回測流程。
 
@@ -35,6 +35,7 @@ def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "d
         start_date (str): 回測開始日期 (YYYY-MM-DD)。
         end_date (str): 回測結束日期 (YYYY-MM-DD)。
         strategy (str): 要使用的策略 ('defaultlong', 'defaultshort', 'defaultall')。
+        smoke_test (bool): 如果為 True，則只執行一小部分回測用於快速測試。
     """
     logger.info(f"===== 開始執行回測任務 =====")
     logger.info(f"目標標的: {ticker}")
@@ -81,6 +82,10 @@ def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "d
     if selected_strategy_pairs is None:
         logger.error(f"錯誤：無效的策略名稱 '{strategy}'。請使用 'defaultlong', 'defaultshort', 或 'defaultall'。")
         return
+
+    if smoke_test:
+        logger.info("--- 煙霧測試模式已啟用：只執行前 2 個策略組合 ---")
+        selected_strategy_pairs = selected_strategy_pairs[:2]
 
     condition_pairs = []
     for entry, exit_cond in selected_strategy_pairs:
@@ -169,9 +174,10 @@ if __name__ == '__main__':
     parser.add_argument("--start_date", type=str, required=True, help="回測開始日期 (YYYY-MM-DD)")
     parser.add_argument("--end_date", type=str, required=True, help="回測結束日期 (YYYY-MM-DD)")
     parser.add_argument("--strategy", type=str, default="defaultlong", help="使用的策略 ('defaultlong', 'defaultshort', 'defaultall')")
+    parser.add_argument("--smoke-test", action="store_true", help="啟用煙霧測試模式，只執行一小部分回測。")
 
     args = parser.parse_args()
 
     ticker_processed = args.ticker.replace('F.1!', ' F.1!')
 
-    run_backtest(ticker_processed, args.start_date, args.end_date, args.strategy)
+    run_backtest(ticker_processed, args.start_date, args.end_date, args.strategy, smoke_test=args.smoke_test)

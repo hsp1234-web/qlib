@@ -499,7 +499,7 @@ class PredictorLoader:
         
         # 清洗數據 - 使用絕對導入避免循環導入問題
         try:
-            from dataloader.validator_loader import DataValidator
+            from .validator_loader import DataValidator
 
             validator = DataValidator(data)
             cleaned_data = validator.validate_and_clean()

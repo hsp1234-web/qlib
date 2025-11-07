@@ -59,6 +59,7 @@ flowchart TD
 """
 
 import os
+import sys
 
 import pandas as pd
 from rich.console import Console
@@ -139,14 +140,26 @@ class BaseMetricTracker:
             )
             return False
 
-        show_parquet_files(files)
-
-        console.print(
-            "[bold #dbac30]請輸入要分析的檔案編號（可用逗號分隔多選，或輸入al/all全選）：[/bold #dbac30]",
-            end="",
-        )
-        user_input = input().strip() or "1"
-        selected_files = select_files(files, user_input)
+        if sys.stdout.isatty():
+            # 互動模式：讓使用者選擇
+            show_parquet_files(files)
+            console.print(
+                "[bold #dbac30]請輸入要分析的檔案編號（可用逗號分隔多選，或輸入al/all全選）：[/bold #dbac30]",
+                end="",
+            )
+            user_input = input().strip() or "1"
+            selected_files = select_files(files, user_input)
+        else:
+            # 非互動模式：自動選擇最新的檔案
+            latest_file = max(files, key=lambda f: os.path.getmtime(os.path.join(directory, f)))
+            selected_files = [latest_file]
+            console.print(
+                Panel(
+                    f"非互動模式：自動選擇最新檔案進行分析：\n- {latest_file}",
+                    title="[bold #8f1511]🚦 Metricstracker 交易分析[/bold #8f1511]",
+                    border_style="#dbac30",
+                )
+            )
 
         if not selected_files:
             console.print(
@@ -207,23 +220,30 @@ class BaseMetricTracker:
 
     def _get_analysis_params(self):
         """獲取分析參數"""
-        console.print(
-            "[bold #dbac30]請輸入年化時間單位（如日線股票252，日線幣365，留空輸入為365）：[/bold #dbac30]"
-        )
-        time_unit = input().strip()
-        if time_unit == "":
-            time_unit = 365
-        else:
-            time_unit = int(time_unit)
+        if sys.stdout.isatty():
+            # 互動模式：讓使用者輸入
+            console.print(
+                "[bold #dbac30]請輸入年化時間單位（如日線股票252，日線幣365，留空輸入為365）：[/bold #dbac30]"
+            )
+            time_unit_input = input().strip()
+            time_unit = int(time_unit_input) if time_unit_input else 365
 
-        console.print(
-            "[bold #dbac30]請輸入無風險利率（%）（輸入n代表n% ，留空輸入為4）：[/bold #dbac30]"
-        )
-        risk_free_rate = input().strip()
-        if risk_free_rate == "":
-            risk_free_rate = 4.0 / 100
+            console.print(
+                "[bold #dbac30]請輸入無風險利率（%）（輸入n代表n% ，留空輸入為4）：[/bold #dbac30]"
+            )
+            risk_free_rate_input = input().strip()
+            risk_free_rate = float(risk_free_rate_input) / 100 if risk_free_rate_input else 0.04
         else:
-            risk_free_rate = float(risk_free_rate) / 100
+            # 非互動模式：使用預設值
+            time_unit = 365
+            risk_free_rate = 0.04
+            console.print(
+                Panel(
+                    f"非互動模式：使用預設分析參數：\n- 年化時間單位: {time_unit}\n- 無風險利率: {risk_free_rate:.2%}",
+                    title="[bold #8f1511]🚦 Metricstracker 交易分析[/bold #8f1511]",
+                    border_style="#dbac30",
+                )
+            )
 
         return time_unit, risk_free_rate
 
