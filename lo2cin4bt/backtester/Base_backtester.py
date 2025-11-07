@@ -178,7 +178,7 @@ class BaseBacktester:
         self.backtest_engine: Optional[Any] = None
         self.exporter = None
 
-    def run(self, predictor_col: Optional[str] = None) -> None:
+    def run(self, predictor_col: Optional[str] = None, limit_combinations: Optional[int] = None) -> None:
         """
         主執行函數，協調預測因子選擇、用戶配置獲取、回測執行與結果導出。
         """
@@ -200,7 +200,7 @@ class BaseBacktester:
 
         # 執行回測
         self.backtest_engine = BacktestEngine(self.data, self.frequency or "1D", self.logger, getattr(self, 'symbol', 'X'))
-        self.results = self.backtest_engine.run_backtests(config)
+        self.results = self.backtest_engine.run_backtests(config, limit_combinations=limit_combinations)
 
         # 導出結果（步驟 6 的 panel 會在 _export_results 中適當時機觸發）
         self._export_results(config)

@@ -334,17 +334,21 @@ class VectorBacktestEngine:
 
         return combinations
 
-    def run_backtests(self, config: Dict) -> List[Dict]:  # pylint: disable=too-complex
+    def run_backtests(self, config: Dict, limit_combinations: Optional[int] = None) -> List[Dict]:  # pylint: disable=too-complex
         """
         執行真正的向量化回測 - 一次性處理所有任務
 
         Args:
             config (Dict): 回測配置，包含條件配對、指標參數、預測因子、交易參數等
+            limit_combinations (Optional[int], optional): 限制參數組合的數量. Defaults to None.
 
         Returns:
             List[Dict]: 回測結果列表，每個元素包含一個策略的回測結果
         """
         all_combinations = self.generate_parameter_combinations(config)
+        if limit_combinations is not None:
+            self.logger.info(f"--- 參數組合數量已限制為: {limit_combinations} ---")
+            all_combinations = all_combinations[:limit_combinations]
         condition_pairs = config["condition_pairs"]
         predictors = config["predictors"]
         trading_params = config["trading_params"]

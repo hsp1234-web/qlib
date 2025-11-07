@@ -209,11 +209,6 @@ class SpecMonitor:
                     optimal_cores = max(1, min(2, total_cores // 2))
                     config_info = f"⚠️ 可用記憶體不足: {available_memory_gb:.1f}GB，🔧 限制並行處理: {optimal_cores}/{total_cores} 核心"
 
-                elif total_cores <= 2:
-                    # 低配置CPU（≤2核）：單核處理
-                    optimal_cores = 1
-                    config_info = f"🖥️ CPU檢測: {total_cores} 核心，🔧 使用單核處理: {optimal_cores}/{total_cores} 核心"
-
                 elif total_cores <= 4:
                     # 中等配置CPU（3-4核）：保留1個核心給系統
                     optimal_cores = total_cores - 1
@@ -341,7 +336,7 @@ class SpecMonitor:
                 total_memory_gb = psutil.virtual_memory().total / (1024**3)
 
                 # 估算記憶體需求（向量化處理更高效，每個任務約需要0.1-0.2MB）
-                estimated_memory_mb = n_tasks * 0.15  # 更合理的估算
+                estimated_memory_mb = n_tasks * 0.25  # 更合理的估算
                 estimated_memory_gb = estimated_memory_mb / 1024
 
                 # 根據總記憶體動態調整警告閾值

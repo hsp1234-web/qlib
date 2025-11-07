@@ -26,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger("BacktestRunner")
 # ---
 
-def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "defaultlong", smoke_test: bool = False):
+def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "defaultlong", smoke_test: bool = False, limit_combinations: int = None):
     """
     執行一次完整的回測流程。
 
@@ -36,6 +36,7 @@ def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "d
         end_date (str): 回測結束日期 (YYYY-MM-DD)。
         strategy (str): 要使用的策略 ('defaultlong', 'defaultshort', 'defaultall')。
         smoke_test (bool): 如果為 True，則只執行一小部分回測用於快速測試。
+        limit_combinations (int, optional): 限制執行的參數組合數量. Defaults to None.
     """
     logger.info(f"===== 開始執行回測任務 =====")
     logger.info(f"目標標的: {ticker}")
@@ -151,7 +152,7 @@ def run_backtest(ticker: str, start_date: str, end_date: str, strategy: str = "d
     backtester.backtest_engine = VectorBacktestEngine(
         data, frequency or "1D", logger, getattr(backtester, 'symbol', 'X')
     )
-    backtester.results = backtester.backtest_engine.run_backtests(config)
+    backtester.results = backtester.backtest_engine.run_backtests(config, limit_combinations=limit_combinations)
 
     # 手動觸發結果導出
     backtester._export_results(config)
@@ -175,9 +176,11 @@ if __name__ == '__main__':
     parser.add_argument("--end_date", type=str, required=True, help="回測結束日期 (YYYY-MM-DD)")
     parser.add_argument("--strategy", type=str, default="defaultlong", help="使用的策略 ('defaultlong', 'defaultshort', 'defaultall')")
     parser.add_argument("--smoke-test", action="store_true", help="啟用煙霧測試模式，只執行一小部分回測。")
+    parser.add_argument("--limit-combinations", type=int, default=None, help="限制回測的參數組合數量")
+
 
     args = parser.parse_args()
 
     ticker_processed = args.ticker.replace('F.1!', ' F.1!')
 
-    run_backtest(ticker_processed, args.start_date, args.end_date, args.strategy, smoke_test=args.smoke_test)
+    run_backtest(ticker_processed, args.start_date, args.end_date, args.strategy, smoke_test=args.smoke_test, limit_combinations=args.limit_combinations)
